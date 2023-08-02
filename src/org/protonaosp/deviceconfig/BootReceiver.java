@@ -22,6 +22,8 @@ import android.content.Intent;
 import android.provider.DeviceConfig;
 import android.util.Log;
 
+import com.android.internal.util.evolution.SimpleDeviceConfig;
+
 public class BootReceiver extends BroadcastReceiver {
     private static final String TAG = "SimpleDeviceConfig";
 
@@ -29,37 +31,7 @@ public class BootReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         new Thread(() -> {
             Log.i(TAG, "Updating device config at boot");
-            updateDefaultConfigs(context);
+            SimpleDeviceConfig.updateDefaultConfigs(context);
         }).start();
-    }
-
-    private void updateDefaultConfigs(Context context) {
-        updateConfig(context, R.array.configs_base, false);
-        updateConfig(context, R.array.configs_base_soft, true);
-
-        updateConfig(context, R.array.configs_device, false);
-    }
-
-    private void updateConfig(Context context, int configArray, boolean isSoft) {
-        // Set current properties
-        String[] rawProperties = context.getResources().getStringArray(configArray);
-        for (String property : rawProperties) {
-            // Format: namespace/key=value
-            String[] kv = property.split("=");
-            String fullKey = kv[0];
-            String[] nsKey = fullKey.split("/");
-
-            String namespace = nsKey[0];
-            String key = nsKey[1];
-            String value = "";
-            if (kv.length > 1) {
-                value = kv[1];
-            }
-
-            // Skip soft configs that already have values
-            if (!isSoft || DeviceConfig.getString(namespace, key, null) == null) {
-                DeviceConfig.setProperty(namespace, key, value, false);
-            }
-        }
     }
 }
